@@ -1,0 +1,17 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* ページ全体の高さを画面に合わせます */
+    border-bottom: 2px solid #ccc; /* ボディとフッターの間に水平の線を引きます */
+}
+
+footer {
+    text-align: center;
+    margin-top: auto; /* フッターをページ下部に配置します */
+    font-size: 12px; /* フォントサイズを小さくします */
+    padding: 10px 0; /* 上下の余白を追加します */
+    border-top: 2px solid #ccc; /* フッター上部に水平の線を引きます */
+}
