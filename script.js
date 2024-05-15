@@ -1,42 +1,64 @@
-function calculateTotalHours() {
-    const data = document.getElementById('shift-data').value;
-    const lines = data.split('\n');
-    let totalBoundMinutes = 0;
-    let totalBreakMinutes = 0;
-
-    lines.forEach(line => {
-        const workMatch = line.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
-        if (workMatch && !line.includes('休')) {
-            const startTime = workMatch[1].split(':');
-            const endTime = workMatch[2].split(':');
-            const startHours = parseInt(startTime[0], 10);
-            const startMinutes = parseInt(startTime[1], 10);
-            const endHours = parseInt(endTime[0], 10);
-            const endMinutes = parseInt(endTime[1], 10);
-            const start = startHours * 60 + startMinutes;
-            const end = endHours * 60 + endMinutes;
-            totalBoundMinutes += (end - start);
-        }
-
-        if (line.includes('休')) {
-            const breakMatch = line.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
-            if (breakMatch) {
-                const breakStartTime = breakMatch[1].split(':');
-                const breakEndTime = breakMatch[2].split(':');
-                const breakStartHours = parseInt(breakStartTime[0], 10);
-                const breakStartMinutes = parseInt(breakStartTime[1], 10);
-                const breakEndHours = parseInt(breakEndTime[0], 10);
-                const breakEndMinutes = parseInt(breakEndTime[1], 10);
-                const breakStart = breakStartHours * 60 + breakStartMinutes;
-                const breakEnd = breakEndHours * 60 + breakEndMinutes;
-                totalBreakMinutes += (breakEnd - breakStart);
-            }
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth'
     });
 
-    const totalBoundHours = (totalBoundMinutes / 60).toFixed(2);
-    const totalWorkHours = ((totalBoundMinutes - totalBreakMinutes) / 60).toFixed(2);
+    calendar.render();
 
-    document.getElementById('total-bound-hours').innerText = totalBoundHours;
-    document.getElementById('total-work-hours').innerText = totalWorkHours;
-}
+    function downloadICSFile(content) {
+        // ICS形式のファイルをダウンロードする関数
+        const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', 'shifts.ics');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function generateICS(shiftData) {
+        let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Shift Calendar//EN\n';
+
+        const lines = shiftData.split('\n');
+
+        lines.forEach(line => {
+            const workMatch = line.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
+            if (workMatch) {
+                const startTime = workMatch[1].split(':');
+                const endTime = workMatch[2].split(':');
+                const startHours = parseInt(startTime[0], 10);
+                const startMinutes = parseInt(startTime[1], 10);
+                const endHours = parseInt(endTime[0], 10);
+                const endMinutes = parseInt(endTime[1], 10);
+
+                const startDate = new Date();
+                startDate.setHours(startHours, startMinutes, 0, 0);
+
+                const endDate = new Date();
+                endDate.setHours(endHours, endMinutes, 0, 0);
+
+                icsContent += 'BEGIN:VEVENT\n';
+                icsContent += 'DTSTART:' + formatDate(startDate) + '\n';
+                icsContent += 'DTEND:' + formatDate(endDate) + '\n';
+                icsContent += 'SUMMARY:Shift\n';
+                icsContent += 'END:VEVENT\n';
+            }
+        });
+
+        icsContent += 'END:VCALENDAR';
+        return icsContent;
+    }
+
+    function formatDate(date) {
+        return date.toISOString().replace(/-|:|\.\d+/g, '');
+    }
+
+    function handleCalculate() {
+        const shiftData = document.getElementById('shift-data').value;
+        const icsContent = generateICS(shiftData);
+        downloadICSFile(icsContent);
+    }
+
+    window.handleCalculate = handleCalculate;
+});
