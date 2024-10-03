@@ -10,21 +10,17 @@ function calculateTotalHours() {
 
     lines.forEach((line, index) => {
         line = line.trim();
-        console.log("Processing line:", line);
 
         const dateMatch = line.match(/^(\d{1,2})\/(\d{1,2})(?:\((\w+)\))?/);
         if (dateMatch) {
             const month = dateMatch[1].padStart(2, '0');
             const day = dateMatch[2].padStart(2, '0');
             let year = new Date().getFullYear();
-
             const currentMonth = new Date().getMonth() + 1;
             if (currentMonth === 12 && parseInt(month) === 1) {
                 year += 1;
             }
-
             currentDate = { year, month, day };
-            console.log("Found date:", currentDate);
             return;
         }
 
@@ -38,8 +34,6 @@ function calculateTotalHours() {
             const end = endHours * 60 + endMinutes;
             let workMinutes = end - start;
 
-            console.log("Work time:", `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`);
-
             const nextLine = lines[index + 1]?.trim();
             if (nextLine && nextLine.match(/^\[休/)) {
                 const breakMatch = nextLine.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
@@ -52,13 +46,10 @@ function calculateTotalHours() {
                     const breakEnd = breakEndHours * 60 + breakEndMinutes;
                     const breakMinutes = breakEnd - breakStart;
                     workMinutes -= breakMinutes;
-                    console.log("Break time:", `${breakStartHours}:${breakStartMinutes} - ${breakEndHours}:${breakEndMinutes}`);
                 }
             }
 
             totalWorkMinutes += workMinutes;
-        } else {
-            console.log("No match for line:", line);
         }
     });
 
@@ -75,21 +66,17 @@ function generateICal() {
 
     lines.forEach((line, index) => {
         line = line.trim();
-        console.log("Processing line for iCal:", line);
 
         const dateMatch = line.match(/^(\d{1,2})\/(\d{1,2})(?:\((\w+)\))?/);
         if (dateMatch) {
             const month = dateMatch[1].padStart(2, '0');
             const day = dateMatch[2].padStart(2, '0');
             let year = new Date().getFullYear();
-
             const currentMonth = new Date().getMonth() + 1;
             if (currentMonth === 12 && parseInt(month) === 1) {
                 year += 1;
             }
-
             currentDate = { year, month, day };
-            console.log("Found date:", currentDate);
             return;
         }
 
@@ -106,8 +93,6 @@ function generateICal() {
                 end: endDateTime,
                 summary: "USJ勤務"
             });
-        } else {
-            console.log("No match for line:", line);
         }
     });
 
@@ -122,17 +107,19 @@ function generateICal() {
     });
     icsContent += "END:VCALENDAR\r\n";
 
-    console.log("Generated ICS Content:\n", icsContent);
-
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'shifts.ics';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (navigator.userAgent.match(/(iPhone|iPad|iPod)/i)) {
+        window.open(url, '_blank');
+    } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'shifts.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 
     URL.revokeObjectURL(url);
 }
